@@ -2,73 +2,77 @@ import streamlit as st
 import pandas as pd
 import io
 
-# Page configuration
-st.set_page_config(page_title="Data Cleaning Application", page_icon="🧹", layout="wide")
+st.set_page_config(page_title="Data Cleaning App", page_icon="🧹", layout="wide")
 
-# Heading
+st.markdown(
+    """
+    <style>
+    body {background-color: #000000; color: #FFFFFF;}
+    h1, h2, h3 {color: #FFDD00;}
+    .stButton>button {background-color: #1f77b4; color: white; border-radius:5px;}
+    .stDownloadButton>button {background-color: #FF6347; color: white; border-radius:5px;}
+    </style>
+    """, unsafe_allow_html=True
+)
+
 st.title("🧹 Data Cleaning Application")
-st.markdown("Upload your CSV or Excel file and clean your data easily!")
+st.markdown("Upload any dataset and clean it easily!")
 
-# File uploader
 uploaded_file = st.file_uploader("📂 Upload CSV or Excel file", type=["csv", "xlsx"])
 
-# Function to convert DataFrame to CSV for download
 def to_csv(df):
     return df.to_csv(index=False).encode('utf-8')
 
-# Load dataset
 if uploaded_file is not None:
     if uploaded_file.name.endswith(".csv"):
         df = pd.read_csv(uploaded_file)
     else:
         df = pd.read_excel(uploaded_file)
 
-    st.subheader("📊 Basic Summary")
+    st.success(f"✅ File '{uploaded_file.name}' uploaded successfully!")
+
+    st.subheader("📊 Dataset Overview")
+    st.write(f"Rows: {df.shape[0]} | Columns: {df.shape[1]}")
+    st.write(f"Total Missing Values: {df.isnull().sum().sum()}")
+    st.write(f"Total Duplicate Records: {df.duplicated().sum()}")
+
+    st.subheader("👀 Data Preview")
+    st.dataframe(df.head())
+
+    st.subheader("🧾 Info Summary")
     buffer = io.StringIO()
     df.info(buf=buffer)
     st.text(buffer.getvalue())
 
-    st.write("Number of missing values per column:")
-    st.write(df.isnull().sum())
+    st.subheader("🛠 Data Cleaning Options")
 
-    st.write("Number of duplicate records:")
-    st.write(df.duplicated().sum())
-
-    st.subheader("⚡ Data Cleaning Options")
-
-    # 1️⃣ Remove missing values
-    if st.button("Remove missing values"):
+    if st.button("Click to Remove Missing Values"):
         cleaned_df = df.dropna()
-        st.success("✅ Missing values removed!")
         st.download_button(
-            label="Download CSV",
+            label="Download Cleaned CSV",
             data=to_csv(cleaned_df),
             file_name="cleaned_missing_removed.csv",
             mime="text/csv"
         )
 
-    # 2️⃣ Handle missing values
-    if st.button("Handle missing values (fillna for objects, interpolate for numerical)"):
+    if st.button("Click to Handle Missing Values"):
         cleaned_df = df.copy()
         for col in cleaned_df.columns:
-            if cleaned_df[col].dtype == 'object':
+            if cleaned_df[col].dtype == "object":
                 cleaned_df[col].fillna("Unknown", inplace=True)
             else:
                 cleaned_df[col] = cleaned_df[col].interpolate()
-        st.success("✅ Missing values handled!")
         st.download_button(
-            label="Download CSV",
+            label="Download Cleaned CSV",
             data=to_csv(cleaned_df),
-            file_name="cleaned_missing_filled.csv",
+            file_name="cleaned_missing_handled.csv",
             mime="text/csv"
         )
 
-    # 3️⃣ Remove duplicate values
-    if st.button("Remove duplicate values"):
+    if st.button("Click to Remove Duplicate Records"):
         cleaned_df = df.drop_duplicates()
-        st.success("✅ Duplicate records removed!")
         st.download_button(
-            label="Download CSV",
+            label="Download Cleaned CSV",
             data=to_csv(cleaned_df),
             file_name="cleaned_duplicates_removed.csv",
             mime="text/csv"
